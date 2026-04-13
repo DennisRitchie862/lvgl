@@ -135,6 +135,8 @@ static unsigned int __stdcall lv_windows_display_thread_entrypoint(
         AdjustWindowRectEx(&rect, window_style, false, ext_window_style);
     }
 
+    int width = rect.right - rect.left;
+    int height = rect.bottom - rect.top;
     HWND window_handle = CreateWindowExW(
                              ext_window_style,
                              L"LVGL.Window",
@@ -142,8 +144,8 @@ static unsigned int __stdcall lv_windows_display_thread_entrypoint(
                              window_style,
                              CW_USEDEFAULT,
                              0,
-                             rect.right - rect.left,
-                             rect.bottom - rect.top,
+                             width,
+                             height,
                              NULL,
                              NULL,
                              NULL,
@@ -161,6 +163,12 @@ static unsigned int __stdcall lv_windows_display_thread_entrypoint(
 
     data->display = context->display_device_object;
 
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    int x = (screenWidth - width) / 2;
+    int y = (screenHeight - height) / 2;
+    SetWindowPos(window_handle, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
     ShowWindow(window_handle, SW_SHOW);
     UpdateWindow(window_handle);
 
@@ -169,9 +177,9 @@ static unsigned int __stdcall lv_windows_display_thread_entrypoint(
     data = NULL;
 
     MSG message;
-    while(GetMessageW(&message, NULL, 0, 0)) {
-        TranslateMessage(&message);
-        DispatchMessageW(&message);
+    while (GetMessageW(&message, NULL, 0, 0)) {
+	    TranslateMessage(&message);
+	    DispatchMessageW(&message);
     }
 
     return 0;
