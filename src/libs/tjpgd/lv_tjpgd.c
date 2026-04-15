@@ -92,11 +92,47 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
 
         if(is_jpg(raw_data, raw_data_size) == true) {
 #if LV_USE_FS_MEMFS
-            header->cf = LV_COLOR_FORMAT_RAW;
-            header->w = img_dsc->header.w;
-            header->h = img_dsc->header.h;
-            header->stride = img_dsc->header.w * 3;
-            return LV_RESULT_OK;
+		if (img_dsc->header.w > 0 && img_dsc->header.h > 0) {
+			header->cf = LV_COLOR_FORMAT_RAW;
+			header->w = img_dsc->header.w;
+			header->h = img_dsc->header.h;
+			header->stride = img_dsc->header.w * 3;
+			return LV_RESULT_OK;
+		}
+
+		LV_LOG_INFO("TJPGD: header w/h is 0, trying to parse JPEG header...");
+
+		uint8_t workb[TJPGD_WORKBUFF_SIZE];
+		JDEC jd;
+		lv_fs_file_t temp_file;
+
+		lv_fs_path_ex_t path;
+		lv_fs_make_path_from_buffer(&path,
+					    LV_FS_MEMFS_LETTER,
+					    raw_data,
+					    raw_data_size,
+					    "bin");
+
+		lv_fs_res_t res = lv_fs_open(&temp_file, (const char *) &path, LV_FS_MODE_RD);
+		if (res != LV_FS_RES_OK) {
+			LV_LOG_WARN("TJPGD: Failed to open temp MEMFS for header parsing");
+			return LV_RESULT_INVALID;
+		}
+
+		JRESULT rc = jd_prepare(&jd, input_func, workb, TJPGD_WORKBUFF_SIZE, &temp_file);
+		lv_fs_close(&temp_file);
+
+		if (rc == JDR_OK) {
+			header->cf = LV_COLOR_FORMAT_RAW;
+			header->w = jd.width;
+			header->h = jd.height;
+			header->stride = jd.width * 3;
+			LV_LOG_INFO("TJPGD: Parsed JPEG size %dx%d from data", jd.width, jd.height);
+			return LV_RESULT_OK;
+		} else {
+			LV_LOG_WARN("TJPGD: jd_prepare failed for header parsing: %d", rc);
+			return LV_RESULT_INVALID;
+		}
 #else
             LV_LOG_WARN("LV_USE_FS_MEMFS needs to enabled to decode from data");
             return LV_RESULT_INVALID;
