@@ -92,6 +92,7 @@ typedef struct _lv_windows_create_display_data_t {
     int32_t zoom_level;
     bool allow_dpi_override;
     bool simulator_mode;
+    bool show_window;
     HANDLE mutex;
     lv_display_t * display;
 } lv_windows_create_display_data_t;

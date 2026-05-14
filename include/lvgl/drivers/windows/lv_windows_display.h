@@ -50,6 +50,7 @@ typedef struct HWND__ * HWND;
  *                           Windows DPI scaling setting dynamically.
  * @param simulator_mode Create simulator mode display if true (not resizable),
  *                       or create application mode display (resizable).
+ * @param show_window Show the window if true, or create it hidden if false.
  * @return The created LVGL display object.
 */
 lv_display_t * lv_windows_create_display(
@@ -58,7 +59,8 @@ lv_display_t * lv_windows_create_display(
     int32_t ver_res,
     int32_t zoom_level,
     bool allow_dpi_override,
-    bool simulator_mode);
+    bool simulator_mode,
+    bool show_window);
 
 /**
  * @brief Get the window handle from specific LVGL display object.

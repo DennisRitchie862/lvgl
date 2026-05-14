@@ -47,7 +47,8 @@ lv_display_t * lv_windows_create_display(
     int32_t ver_res,
     int32_t zoom_level,
     bool allow_dpi_override,
-    bool simulator_mode)
+    bool simulator_mode,
+    bool show_window)
 {
     lv_windows_create_display_data_t data;
 
@@ -58,6 +59,7 @@ lv_display_t * lv_windows_create_display(
     data.zoom_level = zoom_level;
     data.allow_dpi_override = allow_dpi_override;
     data.simulator_mode = simulator_mode;
+    data.show_window = show_window;
     data.mutex = CreateEventExW(NULL, NULL, 0, EVENT_ALL_ACCESS);
     data.display = NULL;
     if(!data.mutex) {
@@ -169,7 +171,9 @@ static unsigned int __stdcall lv_windows_display_thread_entrypoint(
     int y = (screenHeight - height) / 2;
     SetWindowPos(window_handle, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-    ShowWindow(window_handle, SW_SHOW);
+    if(data->show_window)
+        ShowWindow(window_handle, SW_SHOW);
+
     UpdateWindow(window_handle);
 
     LV_ASSERT(SetEvent(data->mutex));
